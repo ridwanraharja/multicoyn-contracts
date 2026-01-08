@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "network": "liskSepolia",
+  "chainId": 4202,
+  "deployer": "0x740F4ffd755Be5888aD1260609510dc1da0445C9",
+  "timestamp": "2026-01-03T17:54:00.686Z",
+  "architecture": "Treasury-based Settlement",
+  "features": [
+    "Multi-token payment",
+    "Single stablecoin settlement (IDRX/USDT)",
+    "Automatic cashback for overpayment",
+    "No merchant registration required"
+  ],
+  "contracts": {
+    "core": {
+      "PaymentRouter": "0x5B08fF5c7A88EcA6b77AC0d382BBb6dF775199e4",
+      "TokenRegistry": "0x22034485fAB67df3307c65Dbe1365D8E4fed174c"
+    },
+    "paymentTokens": {
+      "Native": "0x0000000000000000000000000000000000000000",
+      "USDC": "0x9Bc4446Cf74cB0dA6c4FEc647E632c903cd55253",
+      "USDT": "0x5734cD44e4DEe7Ec47a00d89a432d9a545a093fC",
+      "DAI": "0x8BE2039C6013E3FcBD0271957E7dd6026947bA14",
+      "WBTC": "0x9E2D746A2D6f64b1530228939d3b1Ee0a7e94E05"
+    },
+    "settlementTokens": {
+      "IDRX": "0xEF226b25263F1688cD370b558f6e3B89975F097E",
+      "USDT": "0x5734cD44e4DEe7Ec47a00d89a432d9a545a093fC"
+    },
+    "priceFeeds": {
+      "ETH": "0x6699cbeFDe6d9DaC8a78836636f543CEA0b517de",
+      "USDC": "0x0c80B045c3336Ad5De9E9339f7EAC30239272767",
+      "USDT": "0x89e8E491Db55e813a1b2b10E4ceFeef334E04906",
+      "DAI": "0xe3D6F173Ae2C81826B53066A669e5e5D0646096E",
+      "WBTC": "0x7Fd0085638556F064854F8f8F299d943ef61E299",
+      "IDRX": "0x9f208b77ec805Ca700f58457968E0b9003f1f786"
+    }
+  }
+}
