@@ -228,6 +228,69 @@ contract SimpleNFTMarketplace is ReentrancyGuard, Pausable, Ownable {
     function unpause() external onlyOwner {
         _unpause();
     }
+    
+    struct NFTMarketData {
+        uint256 tokenId;
+        string tokenURI;
+        uint256 listingId;
+        bool hasListing;
+        address seller;
+        address paymentToken;
+        uint256 price;
+        bool active;
+        uint256 listedAt;
+    }
+
+    function getAllMarketNFTs(address nftContract)
+        external
+        view
+        returns (NFTMarketData[] memory)
+    {
+        uint256 totalSupply = IERC721Enumerable(nftContract).totalSupply();
+        require(totalSupply > 0, "SimpleNFTMarketplace: no NFTs minted");
+
+        uint256[] memory tokenIds = new uint256[](totalSupply);
+        for (uint256 i = 0; i < totalSupply; i++) {
+            tokenIds[i] = i + 1; // Token IDs start from 1
+        }
+
+        return getBatchNFTMarketData(nftContract, tokenIds);
+    }
+
+    function getBatchNFTMarketData(
+        address nftContract,
+        uint256[] memory tokenIds
+    ) public view returns (NFTMarketData[] memory) {
+        NFTMarketData[] memory result = new NFTMarketData[](tokenIds.length);
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            uint256 listingId = nftListings[nftContract][tokenId];
+
+            string memory uri = "";
+            try IERC721Metadata(nftContract).tokenURI(tokenId) returns (string memory _uri) {
+                uri = _uri;
+            } catch {
+                // Token doesn't exist or error getting URI
+            }
+
+            Listing memory listing = listings[listingId];
+
+            result[i] = NFTMarketData({
+                tokenId: tokenId,
+                tokenURI: uri,
+                listingId: listingId,
+                hasListing: listingId > 0 && listing.active,
+                seller: listing.seller,
+                paymentToken: listing.paymentToken,
+                price: listing.price,
+                active: listing.active,
+                listedAt: listing.listedAt
+            });
+        }
+
+        return result;
+    }
 
     function onERC721Received(
         address,
@@ -237,4 +300,12 @@ contract SimpleNFTMarketplace is ReentrancyGuard, Pausable, Ownable {
     ) external pure returns (bytes4) {
         return this.onERC721Received.selector;
     }
+}
+
+interface IERC721Metadata {
+    function tokenURI(uint256 tokenId) external view returns (string memory);
+}
+
+interface IERC721Enumerable {
+    function totalSupply() external view returns (uint256);
 }

@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 /**
- * Script to list all 12 Hypurr NFTs on SimpleNFTMarketplace
+ * Script to list all Hypurr NFTs on SimpleNFTMarketplace
  */
 async function main() {
   console.log("📝 Listing NFTs on Marketplace\n");
@@ -12,11 +12,10 @@ async function main() {
 
   // Contract addresses
   const NFT_ADDRESS = "0xd5B14514255B6a6B23930A9D779414D59aA4D64b";
-  const MARKETPLACE_ADDRESS = "0xCeD8b572C7E5564e99f15B58b5CA934a5920854F";
+  const MARKETPLACE_ADDRESS = "0x6381858ddC6bBcb758C23608636f53f1C577E4e2";
 
-  // TODO: Update with your token addresses
-  const USDT_ADDRESS = process.env.USDT_ADDRESS || "0x...";
-  const IDRX_ADDRESS = process.env.IDRX_ADDRESS || "0x...";
+  const USDT_ADDRESS = "0x5734cD44e4DEe7Ec47a00d89a432d9a545a093fC";
+  const IDRX_ADDRESS = "0xEF226b25263F1688cD370b558f6e3B89975F097E";
 
   // Get contracts
   const mockNFT = await ethers.getContractAt("MockNFT", NFT_ADDRESS);
@@ -34,18 +33,18 @@ async function main() {
 
   // NFT pricing (example prices)
   const listings = [
-    { tokenId: 1, name: "Hypurr #14", price: "100", token: "USDT" }, // Rare
-    { tokenId: 2, name: "Hypurr #17", price: "200", token: "USDT" }, // Legendary
-    { tokenId: 3, name: "Hypurr #22", price: "50", token: "USDT" }, // Common
-    { tokenId: 4, name: "Hypurr #3", price: "150", token: "USDT" }, // Epic
-    { tokenId: 5, name: "Hypurr #35", price: "100", token: "USDT" }, // Rare
-    { tokenId: 6, name: "Hypurr #37", price: "50", token: "USDT" }, // Common
-    { tokenId: 7, name: "Hypurr #46", price: "200", token: "USDT" }, // Legendary
-    { tokenId: 8, name: "Hypurr #5", price: "150", token: "USDT" }, // Epic
-    { tokenId: 9, name: "Hypurr #61", price: "100", token: "USDT" }, // Rare
-    { tokenId: 10, name: "Hypurr #63", price: "50", token: "USDT" }, // Common
-    { tokenId: 11, name: "Hypurr #7", price: "150", token: "USDT" }, // Epic
-    { tokenId: 12, name: "Hypurr #8", price: "200", token: "USDT" }, // Legendary
+    { tokenId: 1, name: "Hypurr #14", price: "100", token: "USDT" },
+    { tokenId: 2, name: "Hypurr #17", price: "2000000", token: "IDRX" },
+    { tokenId: 3, name: "Hypurr #22", price: "500000", token: "IDRX" },
+    { tokenId: 4, name: "Hypurr #3", price: "150", token: "USDT" },
+    { tokenId: 5, name: "Hypurr #35", price: "100", token: "USDT" },
+    { tokenId: 6, name: "Hypurr #37", price: "50", token: "USDT" },
+    { tokenId: 7, name: "Hypurr #46", price: "200", token: "USDT" },
+    { tokenId: 8, name: "Hypurr #5", price: "150", token: "USDT" },
+    { tokenId: 9, name: "Hypurr #61", price: "100", token: "USDT" },
+    { tokenId: 10, name: "Hypurr #63", price: "10000000", token: "IDRX" },
+    { tokenId: 11, name: "Hypurr #7", price: "150", token: "USDT" },
+    { tokenId: 12, name: "Hypurr #8", price: "200", token: "USDT" },
   ];
 
   // Step 1: Approve marketplace
@@ -103,11 +102,11 @@ async function main() {
 
     // Get listing ID from event
     const event = receipt?.logs.find(
-      (log: { fragment?: { name?: string } }) =>
-        log.fragment?.name === "NFTListed"
+      (log) =>
+        "fragment" in log && log.fragment?.name === "NFTListed"
     );
-    const listingId = event
-      ? Number((event as { args: [bigint] }).args[0])
+    const listingId = event && "args" in event
+      ? Number(event.args[0])
       : listingIds.length + 1;
 
     listingIds.push(listingId);
