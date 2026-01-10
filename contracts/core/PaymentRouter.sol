@@ -100,14 +100,14 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
         address payable merchantAddress,
         address[] calldata tokens,
         uint256[] calldata amounts,
-        uint256 requiredAmountUSD,
+        uint256 productPriceUSD,
         bool settleInIDR
     ) external payable override nonReentrant whenNotPaused returns (bytes32 paymentId) {
         require(merchantAddress != address(0), "PaymentRouter: invalid merchant");
         require(tokens.length > 0, "PaymentRouter: empty tokens");
         require(tokens.length == amounts.length, "PaymentRouter: length mismatch");
         require(tokens.length <= 5, "PaymentRouter: too many tokens");
-        require(requiredAmountUSD > 0, "PaymentRouter: invalid required amount");
+        require(productPriceUSD > 0, "PaymentRouter: invalid product price");
 
         // Collect payment tokens to treasury
         uint256 totalPaidUSD = 0;
@@ -137,7 +137,7 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
         // Calculate payment breakdown
         PaymentCalculation memory calc = _calculatePayment(
             totalPaidUSD,
-            requiredAmountUSD,
+            productPriceUSD,
             settleInIDR
         );
 
@@ -162,7 +162,7 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
             merchant: merchantAddress,
             payer: msg.sender,
             totalPaidUSD: calc.totalPaidUSD,
-            requiredUSD: calc.requiredUSD,
+            productPriceUSD: calc.productPriceUSD,
             feeUSD: calc.feeUSD,
             excessUSD: calc.excessUSD,
             settleInIDR: settleInIDR,
@@ -179,7 +179,7 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
             merchantAddress,
             msg.sender,
             calc.totalPaidUSD,
-            calc.requiredUSD,
+            calc.productPriceUSD,
             calc.feeUSD,
             calc.excessUSD,
             settleInIDR,
@@ -194,26 +194,28 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
 
     function _calculatePayment(
         uint256 totalPaidUSD,
-        uint256 requiredUSD,
+        uint256 productPriceUSD,
         bool settleInIDR
     ) internal view returns (PaymentCalculation memory calc) {
         calc.totalPaidUSD = totalPaidUSD;
-        calc.requiredUSD = requiredUSD;
-        calc.feeUSD = (requiredUSD * FEE_BASIS_POINTS) / 10000; 
+        calc.productPriceUSD = productPriceUSD;
 
-        // Check: User must pay at least required amount + fee
+        calc.feeUSD = (productPriceUSD * FEE_BASIS_POINTS) / 10000;
+
+        uint256 totalRequired = productPriceUSD + calc.feeUSD;
+
         require(
-            totalPaidUSD >= requiredUSD + calc.feeUSD,
+            totalPaidUSD >= totalRequired,
             "PaymentRouter: insufficient payment"
         );
 
-        // Calculate excess (overpayment)
-        calc.excessUSD = totalPaidUSD - (requiredUSD + calc.feeUSD);
+        calc.excessUSD = totalPaidUSD - totalRequired;
 
         // Convert to settlement token
         address token = settleInIDR ? IDRX_TOKEN : USDT_TOKEN;
 
-        calc.settlementAmount = _convertUSDToToken(calc.requiredUSD, token);
+        calc.settlementAmount = _convertUSDToToken(calc.productPriceUSD, token);
+
         calc.cashbackAmount = calc.excessUSD > 0 ? _convertUSDToToken(calc.excessUSD, token) : 0;
 
         return calc;

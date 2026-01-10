@@ -1,4 +1,6 @@
 import { ethers } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Deploy ONLY SimpleNFTMarketplace to testnet
@@ -19,6 +21,35 @@ async function main() {
   const marketplaceAddress = await marketplace.getAddress();
 
   console.log("✅ SimpleNFTMarketplace deployed to:", marketplaceAddress);
+  console.log();
+
+  // Save to liskSepolia.json
+  console.log("💾 Saving address to deployments/liskSepolia.json...");
+  const deploymentPath = path.join(__dirname, "..", "deployments", "liskSepolia.json");
+
+  let deploymentData: any = {};
+
+  // Read existing deployment file if exists
+  if (fs.existsSync(deploymentPath)) {
+    const fileContent = fs.readFileSync(deploymentPath, "utf-8");
+    deploymentData = JSON.parse(fileContent);
+  }
+
+  // Add marketplace address to contracts
+  if (!deploymentData.contracts) {
+    deploymentData.contracts = {};
+  }
+
+  if (!deploymentData.contracts.nft) {
+    deploymentData.contracts.nft = {};
+  }
+
+  deploymentData.contracts.nft.SimpleNFTMarketplace = marketplaceAddress;
+  deploymentData.timestamp = new Date().toISOString();
+
+  // Write updated deployment data
+  fs.writeFileSync(deploymentPath, JSON.stringify(deploymentData, null, 2));
+  console.log("✅ Address saved to liskSepolia.json");
   console.log();
 
   console.log("=" .repeat(60));

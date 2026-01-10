@@ -6,7 +6,7 @@ pragma solidity ^0.8.28;
 interface IPaymentRouter {
     struct PaymentCalculation {
         uint256 totalPaidUSD;
-        uint256 requiredUSD;
+        uint256 productPriceUSD;
         uint256 feeUSD;
         uint256 excessUSD;
         uint256 settlementAmount;
@@ -17,7 +17,7 @@ interface IPaymentRouter {
         address merchant;
         address payer;
         uint256 totalPaidUSD;
-        uint256 requiredUSD;
+        uint256 productPriceUSD;
         uint256 feeUSD;
         uint256 excessUSD;
         bool settleInIDR;
@@ -33,7 +33,7 @@ interface IPaymentRouter {
         address indexed merchant,
         address indexed payer,
         uint256 totalPaidUSD,
-        uint256 requiredUSD,
+        uint256 productPriceUSD,
         uint256 feeUSD,
         uint256 excessUSD,
         bool settleInIDR,
@@ -86,7 +86,7 @@ interface IPaymentRouter {
         address payable merchantAddress,
         address[] calldata tokens,
         uint256[] calldata amounts,
-        uint256 requiredAmountUSD,
+        uint256 productPriceUSD,
         bool settleInIDR
     ) external payable returns (bytes32 paymentId);
 
