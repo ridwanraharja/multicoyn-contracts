@@ -101,7 +101,9 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
         address[] calldata tokens,
         uint256[] calldata amounts,
         uint256 productPriceUSD,
-        bool settleInIDR
+        bool settleInIDR,
+        address target,
+        bytes calldata callData
     ) external payable override nonReentrant whenNotPaused returns (bytes32 paymentId) {
         require(merchantAddress != address(0), "PaymentRouter: invalid merchant");
         require(tokens.length > 0, "PaymentRouter: empty tokens");
@@ -148,8 +150,20 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
         uint256 totalRequired = calc.settlementAmount + calc.cashbackAmount;
         _requireSufficientPool(settlementTokenAddr, totalRequired);
 
-        // Settle merchant (transfer from settlement pool)
-        _settleMerchant(merchantAddress, settlementTokenAddr, calc.settlementAmount);
+        // Execute external call if target is provided
+        bool externalCallSuccess = false;
+        if (target != address(0)) {
+            require(callData.length > 0, "PaymentRouter: empty calldata");
+            externalCallSuccess = _executeExternalCall(
+                target,
+                settlementTokenAddr,
+                calc.settlementAmount,
+                callData
+            );
+        } else {
+            // Settle merchant directly (transfer from settlement pool)
+            _settleMerchant(merchantAddress, settlementTokenAddr, calc.settlementAmount);
+        }
 
         // Send cashback (if above threshold)
         if (calc.excessUSD >= MIN_CASHBACK_USD && calc.cashbackAmount > 0) {
@@ -170,7 +184,9 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
             cashbackAmount: calc.cashbackAmount,
             tokens: tokens,
             amounts: amounts,
-            timestamp: block.timestamp
+            timestamp: block.timestamp,
+            target: target,
+            callData: callData
         });
 
         // Emit event
@@ -186,7 +202,9 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
             calc.settlementAmount,
             calc.cashbackAmount,
             tokens,
-            amounts
+            amounts,
+            target,
+            externalCallSuccess
         );
 
         return paymentId;
@@ -267,6 +285,27 @@ contract PaymentRouter is IPaymentRouter, ReentrancyGuard, Pausable, Ownable {
             available >= amount + minimumPoolBalance[token],
             "PaymentRouter: insufficient settlement pool"
         );
+    }
+
+    function _executeExternalCall(
+        address target,
+        address settlementToken,
+        uint256 amount,
+        bytes calldata callData
+    ) internal returns (bool success) {
+        // Deduct from settlement pool
+        settlementPools[settlementToken] -= amount;
+
+        // Approve settlement token to target contract
+        IERC20(settlementToken).approve(target, 0);
+        IERC20(settlementToken).approve(target, amount);
+
+        // Execute external call
+        (success, ) = target.call(callData);
+
+        require(success, "PaymentRouter: external call failed");
+
+        return success;
     }
 
     function calculateTotalValue(

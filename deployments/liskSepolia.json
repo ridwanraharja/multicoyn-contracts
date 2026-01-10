@@ -36,6 +36,7 @@
       "IDRX": "0x9c390c7099c1044Ad3ed73A90420B40DF26e03A7"
     },
     "nft": {
+      "MockNFT": "0xd5B14514255B6a6B23930A9D779414D59aA4D64b",
       "SimpleNFTMarketplace": "0xB2f127912AD550d4b8aFb0BC78A5Ff32f24c330a"
     }
   }

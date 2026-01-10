@@ -1,4 +1,6 @@
 import { ethers } from "hardhat";
+import * as fs from "fs";
+import * as path from "path";
 
 /**
  * Script to list all Hypurr NFTs on SimpleNFTMarketplace
@@ -10,12 +12,31 @@ async function main() {
   console.log("Owner:", deployer.address);
   console.log();
 
-  // Contract addresses
-  const NFT_ADDRESS = "0xd5B14514255B6a6B23930A9D779414D59aA4D64b";
-  const MARKETPLACE_ADDRESS = "0x6381858ddC6bBcb758C23608636f53f1C577E4e2";
+  // Load addresses from deployment file
+  const deploymentPath = path.join(
+    __dirname,
+    "..",
+    "deployments",
+    "liskSepolia.json"
+  );
+  const deploymentData = JSON.parse(fs.readFileSync(deploymentPath, "utf-8"));
 
-  const USDT_ADDRESS = "0x5734cD44e4DEe7Ec47a00d89a432d9a545a093fC";
-  const IDRX_ADDRESS = "0xEF226b25263F1688cD370b558f6e3B89975F097E";
+  const MARKETPLACE_ADDRESS = deploymentData.contracts.nft.SimpleNFTMarketplace;
+  const USDT_ADDRESS = deploymentData.contracts.settlementTokens.USDT;
+  const IDRX_ADDRESS = deploymentData.contracts.settlementTokens.IDRX;
+
+  // MockNFT address - get from user input or hardcode
+  const NFT_ADDRESS = process.env.NFT_ADDRESS || deploymentData.contracts.nft?.MockNFT;
+
+  if (!NFT_ADDRESS) {
+    console.error("❌ Error: NFT_ADDRESS not found!");
+    console.log("\nPlease provide NFT address in one of these ways:");
+    console.log("1. Set NFT_ADDRESS environment variable:");
+    console.log("   NFT_ADDRESS=0x... npx hardhat run scripts/list-nfts.ts --network liskSepolia");
+    console.log("2. Or add MockNFT address to deployments/liskSepolia.json:");
+    console.log('   "nft": { "MockNFT": "0x...", "SimpleNFTMarketplace": "..." }');
+    process.exit(1);
+  }
 
   // Get contracts
   const mockNFT = await ethers.getContractAt("MockNFT", NFT_ADDRESS);
@@ -102,12 +123,10 @@ async function main() {
 
     // Get listing ID from event
     const event = receipt?.logs.find(
-      (log) =>
-        "fragment" in log && log.fragment?.name === "NFTListed"
+      (log) => "fragment" in log && log.fragment?.name === "NFTListed"
     );
-    const listingId = event && "args" in event
-      ? Number(event.args[0])
-      : listingIds.length + 1;
+    const listingId =
+      event && "args" in event ? Number(event.args[0]) : listingIds.length + 1;
 
     listingIds.push(listingId);
 

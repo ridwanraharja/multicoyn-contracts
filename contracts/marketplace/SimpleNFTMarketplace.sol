@@ -121,27 +121,30 @@ contract SimpleNFTMarketplace is ReentrancyGuard, Pausable, Ownable {
         return listingId;
     }
 
-    function buyNFT(uint256 listingId) external nonReentrant whenNotPaused {
+    function buyNFTFor(
+        uint256 listingId,
+        address recipient
+    ) public nonReentrant whenNotPaused {
+        require(recipient != address(0), "SimpleNFTMarketplace: invalid recipient");
+
         Listing storage listing = listings[listingId];
 
         require(listing.active, "SimpleNFTMarketplace: listing not active");
-        require(listing.seller != msg.sender, "SimpleNFTMarketplace: cannot buy own NFT");
+        require(listing.seller != recipient, "SimpleNFTMarketplace: cannot buy own NFT");
 
         // Verify NFT still owned by seller
         address currentOwner = IERC721(listing.nftContract).ownerOf(listing.tokenId);
         require(currentOwner == listing.seller, "SimpleNFTMarketplace: seller no longer owns NFT");
 
-        // Transfer payment token from buyer to seller (full price, no fees)
         IERC20(listing.paymentToken).safeTransferFrom(
             msg.sender,
             listing.seller,
             listing.price
         );
 
-        // Transfer NFT to buyer
         IERC721(listing.nftContract).safeTransferFrom(
             listing.seller,
-            msg.sender,
+            recipient,
             listing.tokenId
         );
 
@@ -151,11 +154,15 @@ contract SimpleNFTMarketplace is ReentrancyGuard, Pausable, Ownable {
 
         emit NFTPurchased(
             listingId,
-            msg.sender,
+            recipient,
             listing.seller,
             listing.paymentToken,
             listing.price
         );
+    }
+
+    function buyNFT(uint256 listingId) external nonReentrant whenNotPaused {
+        buyNFTFor(listingId, msg.sender);
     }
 
     function cancelListing(uint256 listingId) external nonReentrant {

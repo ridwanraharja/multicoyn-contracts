@@ -26,6 +26,8 @@ interface IPaymentRouter {
         address[] tokens;
         uint256[] amounts;
         uint256 timestamp;
+        address target;
+        bytes callData;
     }
 
     event PaymentExecuted(
@@ -40,7 +42,9 @@ interface IPaymentRouter {
         uint256 settlementAmount,
         uint256 cashbackAmount,
         address[] tokens,
-        uint256[] amounts
+        uint256[] amounts,
+        address target,
+        bool externalCallSuccess
     );
 
     event MerchantSettled(
@@ -87,7 +91,9 @@ interface IPaymentRouter {
         address[] calldata tokens,
         uint256[] calldata amounts,
         uint256 productPriceUSD,
-        bool settleInIDR
+        bool settleInIDR,
+        address target,
+        bytes calldata callData
     ) external payable returns (bytes32 paymentId);
 
     function calculateTotalValue(

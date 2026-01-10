@@ -18,7 +18,7 @@ const config: HardhatUserConfig = {
       chainId: 31337,
     },
     liskSepolia: {
-      url: "https://rpc.sepolia-api.lisk.com",
+      url: "https://lisk-sepolia.drpc.org",
       chainId: 4202,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
